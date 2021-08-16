@@ -5,6 +5,7 @@ buildGoModule rec {
   pname = "irmago";
   version = "0.8.0";
 
+
   src = fetchFromGitHub {
     owner = "privacybydesign";
     repo = "irmago";
