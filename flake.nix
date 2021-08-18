@@ -125,7 +125,7 @@
             unpackPhase = "true";
 
             postInstall = ''
-               export PGHOST=$HOME/postgres
+              export PGHOST=$HOME/postgres
               export PGDATA=$PGHOST/data
               export PGDATABASE=postgres
               export PGLOG=$PGHOST/postgres.log
