@@ -2,11 +2,11 @@
   description = "(I Reveal My Attributes- IRMA Server)";
 
   inputs.nixpkgs.url = "nixpkgs/nixos-20.09";
-
+  inputs.flake-utils.url = "github:numtide/flake-utils";
   # Upstream source tree(s).
   inputs.irma-server-src = { url = git+https://github.com/privacybydesign/irmago.git; flake = false; };
 
-  outputs = { self, nixpkgs, irma-server-src }:
+  outputs = { self, nixpkgs, irma-server-src ,flake-utils}:
     let
 
       version = "0.8.0";
@@ -26,7 +26,7 @@
       overlay = final: prev: {
 
         irma-server = with final; buildGoModule rec {
-          name = "irma-server-${version}";
+          name = "irma-server";
 
           src = irma-server-src;
 
@@ -58,8 +58,10 @@
       # flake provides only one package or there is a clear "main"
       # package.
       defaultPackage = forAllSystems (system: self.packages.${system}.irma-server);
+      
+      apps.irma = forAllSystems (system: flake-utils.lib.mkApp {drv = self.defaultPackage.${system};exePath = "/bin/irma"; });
 
-      defaultApp = forAllSystems (system: {type ="app"; program = "${self.packages.x86_64-linux.irma-server-0.8.0}/bin/irma server"; });
+      defaultApp = forAllSystems (system: self.apps.irma.${system});
       
       devShell = forAllSystems (system:
         let
