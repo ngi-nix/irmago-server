@@ -31,17 +31,18 @@
           src = irma-server-src;
 
           vendorSha256 =  "sha256-9JZKl5hm3qtbYNwPFyDSzndhw6/Qr2DN/CY3eSNDMxU=";
+          doCheck = false;
 
-         checkPhase = ''
-          echo "Testing requres postgresql and MailHog which are not required for operation hence it is done only in nix develop"
-          '';
+          # Testing requres postgresql and MailHog which are not required for operation hence it is done only in nix develop"
 
           meta = {
-            homepage = "https://privacybydesign.foundation/irma-explanation/";
-            description = "This program is IRMA server.
-            IRMA stands for I Reveal My Attributes. 
-            IRMA empowers you to disclose online,
-            via your mobile phone, certain attributes of yourself";
+            homepage = ''
+            https://privacybydesign.foundation/irma-explanation/";
+              description = "This program is IRMA server.
+              IRMA stands for I Reveal My Attributes. 
+              IRMA empowers you to disclose online,
+              via your mobile phone, certain attributes of yourself
+              '';
           };
         };
 
@@ -58,6 +59,7 @@
       # package.
       defaultPackage = forAllSystems (system: self.packages.${system}.irma-server);
 
+      defaultApp = forAllSystems (system: {type ="app"; program = "${self.packages.x86_64-linux.irma-server-0.8.0}/bin/irma server"; });
       
       devShell = forAllSystems (system:
         let
@@ -68,8 +70,6 @@
 
         in
         pkgs.mkShell {
-
-
           buildInputs = with pkgs; [
             go
             postgresql
@@ -110,9 +110,7 @@
       # Tests run by 'nix flake check' and by Hydra.
       checks = forAllSystems (system: {
          inherit (self.packages.${system}) irma-server;
-         test =
-         with nixpkgsFor.${system};
-        stdenv.mkDerivation {
+         test = with nixpkgsFor.${system}; stdenv.mkDerivation {
             name = "irma-server-test-${version}";
 
             buildInputs = [ irma-server go postgresql mailhog ];
