@@ -180,7 +180,7 @@
                   systemd.services.irmago-server = {
                     description = "IRMAGO Server";
                     serviceConfig = {
-                      ExecStart =  "${self.packages.x86_64-linux.irma-server-0.8.0}/bin/irma server";
+                      ExecStart =  "${self.packages.x86_64-linux.irma-server}/bin/irma server";
                       
                     };
                   };
