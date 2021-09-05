@@ -159,5 +159,37 @@
 
       });
 
+
+      nixosModules.irmago-server={config, nixpkgs, lib,...}:with lib; {
+
+                options = {
+
+                  services.irmago-server = {
+                    enable = mkOption {
+                      type = types.bool;
+                      default = false;
+                      description = ''
+                      irmago-server
+                      '';
+                    };
+                  };
+
+                };
+
+
+                ###### implementation
+
+                config = mkIf config.services.irmago-server.enable {
+                  systemd.services.irmago-server = {
+                    description = "IRMAGO Server";
+                    serviceConfig = {
+                      ExecStart =  "${self.packages.x86_64-linux.irmago-server}/bin/irma server";
+                      
+                    };
+                  };
+                };
+         
+         };
+
     };
 }
