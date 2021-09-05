@@ -9,8 +9,7 @@
   outputs = { self, nixpkgs, irma-server-src }:
     let
 
-      version = builtins.substring 0 8 irma-server-src.lastModifiedDate;
-
+      version = "0.8.0";
       supportedSystems = [ "x86_64-linux" ];
 
       # Helper function to generate an attrset '{ x86_64-linux = f "x86_64-linux"; ... }'.
@@ -183,7 +182,7 @@
                   systemd.services.irmago-server = {
                     description = "IRMAGO Server";
                     serviceConfig = {
-                      ExecStart =  "${self.packages.x86_64-linux.irma-server-20210727}/bin/irma server";
+                      ExecStart =  "${self.packages.x86_64-linux.irma-server-0.8.0}/bin/irma server";
                       
                     };
                   };
