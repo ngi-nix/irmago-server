@@ -1,20 +1,15 @@
 {
-  description = "(insert short project description here)";
+  description = "(I Reveal My Attributes- IRMA Server)";
 
-  # Nixpkgs / NixOS version to use.
   inputs.nixpkgs.url = "nixpkgs/nixos-20.09";
-
+  inputs.flake-utils.url = "github:numtide/flake-utils";
   # Upstream source tree(s).
-  inputs.hello-src = { url = git+https://git.savannah.gnu.org/git/hello.git; flake = false; };
-  inputs.gnulib-src = { url = git+https://git.savannah.gnu.org/git/gnulib.git; flake = false; };
+  inputs.irma-server-src = { url = git+https://github.com/privacybydesign/irmago.git; flake = false; };
 
-  outputs = { self, nixpkgs, hello-src, gnulib-src }:
+  outputs = { self, nixpkgs, irma-server-src ,flake-utils}:
     let
 
-      # Generate a user-friendly version numer.
-      version = builtins.substring 0 8 hello-src.lastModifiedDate;
-
-      # System types to support.
+      version = "0.8.0";
       supportedSystems = [ "x86_64-linux" ];
 
       # Helper function to generate an attrset '{ x86_64-linux = f "x86_64-linux"; ... }'.
@@ -30,21 +25,24 @@
       # A Nixpkgs overlay.
       overlay = final: prev: {
 
-        hello = with final; stdenv.mkDerivation rec {
-          name = "hello-${version}";
+        irma-server = with final; buildGoModule rec {
+          name = "irma-server";
 
-          src = hello-src;
+          src = irma-server-src;
 
-          buildInputs = [ autoconf automake gettext gnulib perl gperf texinfo help2man ];
+          vendorSha256 =  "sha256-9JZKl5hm3qtbYNwPFyDSzndhw6/Qr2DN/CY3eSNDMxU=";
+          doCheck = false;
 
-          preConfigure = ''
-            mkdir -p .git # force BUILD_FROM_GIT
-            ./bootstrap --gnulib-srcdir=${gnulib-src} --no-git --skip-po
-          '';
+          # Testing requres postgresql and MailHog which are not required for operation hence it is done only in nix develop"
 
           meta = {
-            homepage = "https://www.gnu.org/software/hello/";
-            description = "A program to show a familiar, friendly greeting";
+            homepage = ''
+            https://privacybydesign.foundation/irma-explanation/";
+              description = "This program is IRMA server.
+              IRMA stands for I Reveal My Attributes. 
+              IRMA empowers you to disclose online,
+              via your mobile phone, certain attributes of yourself
+              '';
           };
         };
 
@@ -53,68 +51,144 @@
       # Provide some binary packages for selected system types.
       packages = forAllSystems (system:
         {
-          inherit (nixpkgsFor.${system}) hello;
+          inherit (nixpkgsFor.${system}) irma-server;
         });
 
       # The default package for 'nix build'. This makes sense if the
       # flake provides only one package or there is a clear "main"
       # package.
-      defaultPackage = forAllSystems (system: self.packages.${system}.hello);
+      defaultPackage = forAllSystems (system: self.packages.${system}.irma-server);
+      
+      apps.irma = forAllSystems (system: flake-utils.lib.mkApp {drv = self.defaultPackage.${system};exePath = "/bin/irma"; });
 
-      # A NixOS module, if applicable (e.g. if the package provides a system service).
-      nixosModules.hello =
-        { pkgs, ... }:
-        {
-          nixpkgs.overlays = [ self.overlay ];
+      defaultApp = forAllSystems (system: self.apps.irma.${system});
+      
+      devShell = forAllSystems (system:
+        let
+          pkgs = import nixpkgs {
+            inherit system;
+            overlays = [ self.overlay ];
+          };
 
-          environment.systemPackages = [ pkgs.hello ];
+        in
+        pkgs.mkShell {
+          buildInputs = with pkgs; [
+            go
+            postgresql
+            mailhog
+          ];
 
-          #systemd.services = { ... };
-        };
+          shellHook = ''
+              export PGHOST=$HOME/postgres
+              export PGDATA=$PGHOST/data
+              export PGDATABASE=postgres
+              export PGLOG=$PGHOST/postgres.log
+            
+              if pg_ctl status 
+              then 
+              pg_ctl stop
+              fi
+
+              if [ ! -d $PGDATA ]; then
+                initdb -U postgres --auth=trust --no-locale --encoding=UTF8
+              fi
+              
+              pg_ctl -D $PGDATA -l $PGLOG -o "-k /tmp" -o "-F -p 5432" start
+              
+              if  pg_ctl status
+              then
+              createuser -h localhost -s postgres
+
+              psql -U postgres -h localhost -c 'CREATE database test'
+              psql -U postgres -h localhost -c "CREATE USER testuser with encrypted password 'testpassword'"
+              psql -U postgres -h localhost -c 'grant all privileges on database test to testuser'
+              fi
+            '';
+
+
+
+        });
 
       # Tests run by 'nix flake check' and by Hydra.
       checks = forAllSystems (system: {
-        inherit (self.packages.${system}) hello;
+         inherit (self.packages.${system}) irma-server;
+         test = with nixpkgsFor.${system}; stdenv.mkDerivation {
+            name = "irma-server-test-${version}";
 
-        # Additional tests, if applicable.
-        test =
-          with nixpkgsFor.${system};
-          stdenv.mkDerivation {
-            name = "hello-test-${version}";
+            buildInputs = [ irma-server go postgresql mailhog ];
 
-            buildInputs = [ hello ];
+            src = irma-server-src;
+          
+            vendorSha256 =  "sha256-9JZKl5hm3qtbYNwPFyDSzndhw6/Qr2DN/CY3eSNDMxU=";
 
             unpackPhase = "true";
 
-            buildPhase = ''
-              echo 'running some integration tests'
-              [[ $(hello) = 'Hello, world!' ]]
+            postInstall = ''
+              export PGHOST=$HOME/postgres
+              export PGDATA=$PGHOST/data
+              export PGDATABASE=postgres
+              export PGLOG=$PGHOST/postgres.log
+            
+              if pg_ctl status 
+              then 
+              pg_ctl stop
+              fi
+
+              if [ ! -d $PGDATA ]; then
+                initdb -U postgres --auth=trust --no-locale --encoding=UTF8
+              fi
+              
+              pg_ctl -D $PGDATA -l $PGLOG -o "-k /tmp" -o "-F -p 5432" start
+              
+              if  pg_ctl status
+              then
+              createuser -h localhost -s postgres
+
+              psql -U postgres -h localhost -c 'CREATE database test'
+              psql -U postgres -h localhost -c "CREATE USER testuser with encrypted password 'testpassword'"
+              psql -U postgres -h localhost -c 'grant all privileges on database test to testuser'
+              fi
+              go test ./...  
             '';
+
 
             installPhase = "mkdir -p $out";
           };
+        
 
-        # A VM test of the NixOS module.
-        vmTest =
-          with import (nixpkgs + "/nixos/lib/testing-python.nix") {
-            inherit system;
-          };
-
-          makeTest {
-            nodes = {
-              client = { ... }: {
-                imports = [ self.nixosModules.hello ];
-              };
-            };
-
-            testScript =
-              ''
-                start_all()
-                client.wait_for_unit("multi-user.target")
-                client.succeed("hello")
-              '';
-          };
       });
+
+
+      nixosModules.irmago-server={config, nixpkgs, lib,...}:with lib; {
+
+                options = {
+
+                  services.irmago-server = {
+                    enable = mkOption {
+                      type = types.bool;
+                      default = false;
+                      description = ''
+                      irmago-server
+                      '';
+                    };
+                  };
+
+                };
+
+
+                ###### implementation
+
+                config = mkIf config.services.irmago-server.enable {
+                  systemd.services.irmago-server = {
+                    description = "IRMAGO Server";
+                    serviceConfig = {
+                      ExecStart =  "${self.packages.x86_64-linux.irma-server}/bin/irma server";
+                      
+                    };
+                  };
+                };
+         
+         };
 
     };
 }

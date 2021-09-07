@@ -1,44 +1,43 @@
 {
   "nodes": {
-    "gnulib-src": {
-      "flake": false,
+    "flake-utils": {
       "locked": {
-        "lastModified": 1588070119,
-        "narHash": "sha256-gMIWbMSKisS5w6QxKFfN1IJHPHxZw9h5upzxpada+1c=",
-        "ref": "master",
-        "rev": "5ec4d920e4acb45225320c3df9ae32fdff928413",
-        "revCount": 20684,
-        "type": "git",
-        "url": "https://git.savannah.gnu.org/git/gnulib.git"
+        "lastModified": 1629481132,
+        "narHash": "sha256-JHgasjPR0/J1J3DRm4KxM4zTyAj4IOJY8vIl75v/kPI=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "997f7efcb746a9c140ce1f13c72263189225f482",
+        "type": "github"
       },
       "original": {
-        "type": "git",
-        "url": "https://git.savannah.gnu.org/git/gnulib.git"
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
       }
     },
-    "hello-src": {
+    "irma-server-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1549746003,
-        "narHash": "sha256-7losVbaLgy9pjL6GoOrZAK6O6nCXm3pddo03UZDjxUc=",
+        "lastModified": 1627390064,
+        "narHash": "sha256-Y+DUFOlgmyHloQwq0MTs/oabLf+8NHVElguoM9EVvmo=",
         "ref": "master",
-        "rev": "0cce403f478bd0a4a60d0b8566c67d3a72498008",
-        "revCount": 454,
+        "rev": "0c153a97d013162688e77f104c65bd246b5d5323",
+        "revCount": 1795,
         "type": "git",
-        "url": "https://git.savannah.gnu.org/git/hello.git"
+        "url": "https://github.com/privacybydesign/irmago.git"
       },
       "original": {
         "type": "git",
-        "url": "https://git.savannah.gnu.org/git/hello.git"
+        "url": "https://github.com/privacybydesign/irmago.git"
       }
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1603528673,
-        "narHash": "sha256-iFrxF9GMes1jH7v8qjep1BsQYEq/admkEv/gJoqQsHo=",
+        "lastModified": 1625876282,
+        "narHash": "sha256-z/Gv+11Uzdv3HcQCY+xGi1+iuc3rmCaPzxxDSMnuRAI=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "95d26c9a9f2a102e25cf318a648de44537f42e09",
+        "rev": "068984c00e0d4e54b6684d98f6ac47c92dcb642e",
         "type": "github"
       },
       "original": {
@@ -49,8 +48,8 @@
     },
     "root": {
       "inputs": {
-        "gnulib-src": "gnulib-src",
-        "hello-src": "hello-src",
+        "flake-utils": "flake-utils",
+        "irma-server-src": "irma-server-src",
         "nixpkgs": "nixpkgs"
       }
     }
